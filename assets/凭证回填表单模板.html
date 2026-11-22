@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!-- OPC · 飞书应用凭证回填表单模板（v2.29.4）
+     用法（Agent 执行）：把本文件复制到 <Vault>/99_Agent配置/凭证回填表单.html，
+     只改下方 ROLES 一行为本轮 provision 的 --roles 岗位清单，
+     然后用宿主内嵌预览交付给创始人（Hermes 桌面：::preview 指令）。
+     创始人建完应用把 App ID / App Secret 填进表单点「发送给 Agent」；
+     无内嵌预览能力的宿主，点发送会退化为生成文本供创始人复制粘贴到聊天。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>OPC · 飞书应用凭证回填</title>
+<style>
+  :root { --fg: var(--foreground, #1a1a1a); --mut: var(--muted-foreground, #6b7280);
+          --bd: var(--border, #d0d7de); --card: var(--card, #ffffff); --ac: var(--accent, #2563eb); }
+  body { margin: 0; font: 14px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--fg); }
+  .form { max-width: 720px; }
+  h3 { margin: 0 0 4px; font-size: 15px; }
+  p.hint { margin: 0 0 12px; font-size: 12px; color: var(--mut); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: left; font-weight: 600; color: var(--mut); padding: 4px 8px 6px 0; border-bottom: 1px solid var(--bd); }
+  td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--bd); vertical-align: middle; }
+  td.role { font-weight: 600; white-space: nowrap; }
+  td.role small { display: block; font-weight: 400; color: var(--mut); }
+  input.cred { width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; color: var(--fg);
+               background: var(--card); border: 1px solid var(--bd); border-radius: 6px; }
+  input.cred::placeholder { color: var(--mut); }
+  input.bad { border-color: #e5484d; }
+  .row-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  button.send { padding: 6px 14px; font: inherit; color: var(--fg); background: var(--ac);
+                border: 1px solid var(--bd); border-radius: 6px; cursor: pointer; }
+  label.show { font-size: 12px; color: var(--mut); user-select: none; cursor: pointer; }
+  .msg { margin-top: 10px; font-size: 12px; min-height: 16px; }
+  .msg.err { color: #e5484d; }  .msg.ok { color: var(--mut); }
+  textarea.fallback { display: none; width: 100%; margin-top: 8px; box-sizing: border-box;
+                      font: 12px ui-monospace, monospace; color: var(--fg); background: var(--card);
+                      border: 1px solid var(--bd); border-radius: 6px; padding: 8px; }
+</style>
+</head>
+<body>
+<div class="form">
+  <h3>OPC · 飞书应用凭证回填</h3>
+  <p class="hint">App ID / App Secret 在每个应用的「凭证与基础信息」页。应用名不强制，叫什么都行——绑定只认凭证不认名字，建议名只是为了对得上岗位。留空的岗位自动跳过；ID 必须以 cli_ 开头。点发送后凭证作为消息发给 Agent，只写入对应身份的 .env，不回显。</p>
+  <table>
+    <tr><th>岗位</th><th style="width:38%">App ID</th><th style="width:38%">App Secret</th></tr>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="row-actions">
+    <button class="send" id="sendBtn">发送给 Agent</button>
+    <label class="show"><input type="checkbox" id="showSec"> 显示密钥</label>
+  </div>
+  <div class="msg" id="msg"></div>
+  <textarea class="fallback" id="fallback" rows="6" readonly></textarea>
+</div>
+<script>
+  // ↓↓↓ Agent 只改这一行：本轮 provision --roles 的岗位清单 ↓↓↓
+  const ROLES = ['strategist', 'market', 'pm', 'design', 'architect'];
+
+  const rows = document.getElementById('rows');
+  for (const r of ROLES) {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td class="role">${r}<small>应用名随意（建议 OPC·${r}）</small></td>` +
+      `<td><input class="cred aid" data-role="${r}" placeholder="cli_xxxxxxxxxxxx"></td>` +
+      `<td><input class="cred sec" data-role="${r}" type="password" placeholder="App Secret"></td>`;
+    rows.appendChild(tr);
+  }
+  const msg = document.getElementById('msg');
+  const fallback = document.getElementById('fallback');
+  document.getElementById('showSec').addEventListener('change', e => {
+    document.querySelectorAll('input.sec').forEach(i => i.type = e.target.checked ? 'text' : 'password');
+  });
+  function collect() {
+    const pairs = [];
+    for (const r of ROLES) {
+      const aid = document.querySelector(`input.aid[data-role="${r}"]`);
+      const sec = document.querySelector(`input.sec[data-role="${r}"]`);
+      aid.classList.remove('bad'); sec.classList.remove('bad');
+      const a = aid.value.trim(), s = sec.value.trim();
+      if (!a && !s) continue;                       // 留空 = 跳过
+      if (!a || !s) { (a ? sec : aid).classList.add('bad');
+        msg.className = 'msg err'; msg.textContent = r + '：App ID 和 Secret 要成对填写'; return null; }
+      if (!a.startsWith('cli_')) { aid.classList.add('bad');
+        msg.className = 'msg err'; msg.textContent = r + '：App ID 应以 cli_ 开头'; return null; }
+      pairs.push(r + ': ' + a + ' / ' + s);
+    }
+    return pairs;
+  }
+  document.getElementById('sendBtn').addEventListener('click', () => {
+    const pairs = collect();
+    if (!pairs) return;
+    if (!pairs.length) { msg.className = 'msg err'; msg.textContent = '至少填一组凭证'; return; }
+    const text = pairs.join('\n');
+    if (window.hermes && typeof window.hermes.send === 'function') {
+      window.hermes.send(text);
+      msg.className = 'msg ok';
+      msg.textContent = '已发送 ' + pairs.length + ' 组凭证，等 Agent 落盘回执';
+    } else {
+      fallback.style.display = 'block'; fallback.value = text; fallback.select();
+      msg.className = 'msg ok'; msg.textContent = '组件通道不可用：文本已生成并选中，复制后在聊天里粘贴发送即可';
+    }
+  });
+</script>
+</body>
+</html>

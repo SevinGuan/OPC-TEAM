@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{页面标题}}</title>
+<style>
+  /* Fantasy Web Design · 可视化模板
+     基线：左对齐 / 三级字号 / 无渐变 / 无 emoji 图标 / 单一强调色
+     强调色可按 brief 调整，默认 #FF4D4F */
+  :root {
+    --accent: #FF4D4F;          /* 强调色：按设计 brief 替换 */
+    --up: #FF4D4F;              /* 涨/正向 */
+    --down: #00B578;            /* 跌/负向 */
+    --ink: #1f2329;             /* 主文字 */
+    --ink-2: #4e5561;           /* 次文字 */
+    --ink-3: #8a919f;           /* 弱文字 */
+    --line: #e5e7eb;            /* 分隔线 */
+    --bg: #f7f8fa;              /* 页面底色 */
+    --card: #ffffff;            /* 卡片底色 */
+    --tag-bg: #f2f3f5;          /* 标签底色 */
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 28px 80px; }
+
+  /* 页头 */
+  header { margin-bottom: 44px; border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; }
+  header p { color: var(--ink-2); margin-top: 8px; font-size: 14px; }
+  .meta { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .meta span {
+    font-size: 12px; color: var(--ink-2); background: var(--tag-bg);
+    padding: 3px 10px; border-radius: 999px;
+  }
+
+  /* 目录 */
+  nav.toc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 22px; margin-bottom: 40px; display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  nav.toc a { color: var(--ink-2); text-decoration: none; font-size: 14px; font-weight: 500; }
+  nav.toc a:hover { color: var(--accent); }
+
+  /* 章节 */
+  section { margin-bottom: 52px; }
+  section > h2 {
+    font-size: 19px; font-weight: 700; margin-bottom: 4px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .num { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+  section > p.desc { color: var(--ink-3); font-size: 13px; margin-bottom: 18px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 26px 0 12px; }
+
+  /* 卡片网格 */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; transition: border-color .15s;
+  }
+  .card:hover { border-color: #c9ccd4; }
+  .card .name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .card .name a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .card .name a:hover { color: var(--accent); border-color: var(--accent); }
+  .card .url { color: var(--ink-3); font-size: 12px; margin-top: 2px; font-family: ui-monospace, Consolas, monospace; }
+  .card p { color: var(--ink-2); font-size: 13px; margin-top: 8px; }
+
+  /* 标签 */
+  .tag {
+    font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 500;
+    background: var(--tag-bg); color: var(--ink-2); white-space: nowrap;
+  }
+  .tag.hot { background: #fff1f0; color: var(--up); }
+  .tag.best { background: #e8f7f1; color: var(--down); }
+  .tag.star { background: #fff7e6; color: #ad6800; }
+
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  th { background: #fafbfc; text-align: left; font-weight: 600; padding: 10px 16px; border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: 13px; }
+  td { padding: 10px 16px; border-bottom: 1px solid #f0f1f3; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+  td a:hover { color: var(--accent); border-color: var(--accent); }
+  td .sub { color: var(--ink-3); font-size: 12px; display: block; margin-top: 2px; }
+
+  /* 提示框 */
+  .callout {
+    background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 16px 20px; margin-top: 20px;
+  }
+  .callout h4 { font-size: 14px; margin-bottom: 8px; }
+  .callout ol, .callout ul { padding-left: 20px; color: var(--ink-2); font-size: 14px; }
+  .callout li { margin: 4px 0; }
+  .callout.good { border-left-color: var(--down); }
+
+  /* 色板（设计 brief 用） */
+  .swatches { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+  .swatch { width: 96px; }
+  .swatch .chip { height: 48px; border-radius: 8px; border: 1px solid var(--line); }
+  .swatch .label { font-size: 11px; color: var(--ink-2); margin-top: 6px; text-align: center; font-family: ui-monospace, Consolas, monospace; }
+
+  footer { border-top: 1px solid var(--line); padding-top: 20px; color: var(--ink-3); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ 页头：替换标题/副标题/标签 ============ -->
+<header>
+  <h1>{{页面标题}}</h1>
+  <p>{{副标题 · 生成日期}}</p>
+  <div class="meta">
+    <span>{{标签 1}}</span><span>{{标签 2}}</span><span>{{标签 3}}</span>
+  </div>
+</header>
+
+<!-- ============ 目录：锚点跳转 ============ -->
+<nav class="toc">
+  <a href="#s1">① {{章节一}}</a>
+  <a href="#s2">② {{章节二}}</a>
+</nav>
+
+<!-- ============ 章节：卡片网格或表格二选一 ============ -->
+<section id="s1">
+  <h2><span class="num">01</span>{{章节标题}}</h2>
+  <p class="desc">{{一句话说明}}</p>
+
+  <h3>{{子分类}}</h3>
+  <div class="grid">
+    <div class="card">
+      <div class="name"><a href="#" target="_blank">{{名称}}</a><span class="tag hot">{{标签}}</span></div>
+      <div class="url">example.com</div>
+      <p>{{一句话说明}}</p>
+    </div>
+    <!-- 更多卡片… -->
+  </div>
+
+  <!-- 表格版式（组件库/参数对比用） -->
+  <!--
+  <table>
+    <tr><th style="width:160px">项目</th><th style="width:90px">热度</th><th>说明</th></tr>
+    <tr><td><a href="#">名称</a><span class="sub">url</span></td><td><span class="tag star">85k★</span></td><td>说明文字</td></tr>
+  </table>
+  -->
+</section>
+
+<!-- ============ 提示框 ============ -->
+<div class="callout">
+  <h4>{{小节标题}}</h4>
+  <ol>
+    <li>{{要点}}</li>
+  </ol>
+</div>
+
+<footer>
+  由 Fantasy Web Design skill 生成 · {{日期}} · 本页遵循去 AI 感基线（左对齐 / 三级字号 / 无渐变 / 单一强调色）
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,435 @@
+{
+  "schema": "opc-team/v2.21",
+  "vault_root": "./OPC-Vault",
+  "default_backend": "local",
+  "backends": {
+    "local": {
+      "type": "local",
+      "root": "./OPC-Vault",
+      "note": "默认后端；所有产出留在 Vault 内"
+    },
+    "feishu": {
+      "type": "exec",
+      "label": "飞书 CLI / 自定义外部 CLI",
+      "cli": "lark-cli",
+      "push_cmd": "",
+      "url_prefix": "",
+      "folder_token": "",
+      "project_prefix": "OPC",
+      "base_token": "",
+      "base_tables": {
+        "项目汇总": "",
+        "①需求池（关联项目）": "",
+        "②版本开发计划": "",
+        "③版本 Bug 记录": "",
+        "发布版本": ""
+      },
+      "base_note": "多维表格台账地址（scripts/base_schema.py 用）。**app_token 与 table_id 是租户资源标识，发布物里一律留空** —— 填自己的表就填这里（本地副本），或用环境变量 FEISHU_BASE_TOKEN / FEISHU_BASE_TABLE_<KEY> 覆盖。未配置时 base_schema.py / base_clean.py 直接报错退出，不会去碰别人的表。表结构定义在 scripts/base_schema.py（那是真相源），本处只给地址。",
+      "enabled": true,
+      "credential_env": [
+        "FEISHU_APP_ID",
+        "FEISHU_APP_SECRET",
+        "FEISHU_FOLDER_TOKEN"
+      ],
+      "note": "两种用法互不冲突。① 作**资产绑定后端**（§15.8）：把某岗位产出绑到飞书，opc bind <role> feishu --key <键> --ref <飞书地址>。② 作**远程仓库 / 云端仓库**（v2.7，默认）：本地照常写入，流程走完后额外把同一份产出再写一份到云端；此时用 opc sync。云端可沉淀知识库、产品原型、各项目任务与需求，创始人从云端查知识、拿未完成任务，回本地用 Agent 干活。sync_mode=auto（初始化时配了就不再逐次问）/ ask（每次问一次）/ off（不碰云端）。**上送分两类（v2.10 增量同步 + 远程写入权归 pm）**：① **各岗只本地入队，不直接写远程**——每个职业干完自己这步，用 opc done --sync-self 或 opc sync --role <本岗> 把本岗本次产出登记为待同步（批次号 + 时间戳 + SHA256 + 版本号），队列在 30_项目/_同步队列/；② **远程写入只有产品经理 pm 能做**——opc sync --flush 推送队列，或 opc sync --project <项目号> 做项目级全量；opc advance 推进时顺带推送本项目队列。**增量语义**：每个批次推到远端一个独立版本目录 OPC/<项目号>/<role>/<批次号>/，历史版本全部保留、互不覆盖，能看清产出演进轨迹。opc sync --queue 为纯本地只读（不需要 token）。云端不派活、不参与状态机、不做真相源，本地 Vault 始终是唯一真相源。folder_token 填云端根文件夹 token（可用 lark-cli drive +create-folder --name OPC 拿到）；未配置时同步静默跳过，不阻塞流程。",
+      "sync_mode": "ask",
+      "upload_by": "pm",
+      "write_by": "pm",
+      "sync_mode_note": "各岗只本地入队（--sync-self / --role）；远程写入由 pm 执行（--flush）。增量推送：每批次一个版本目录，历史保留不覆盖。",
+      "remote_role": "repository",
+      "remote_features": [
+        "knowledge",
+        "prototype",
+        "tasks"
+      ]
+    },
+    "yunxiao": {
+      "type": "exec",
+      "label": "阿里云云效（Codeup 代码仓库 / Flow CI-CD）",
+      "cli": "",
+      "push_cmd": "",
+      "url_prefix": "",
+      "credential_env": [
+        "ALIBABA_CLOUD_YUNXIAO_ACCESS_TOKEN",
+        "ALIBABA_CLOUD_YUNXIAO_ORGANIZATION_ID"
+      ],
+      "note": "代码仓库与 CI/CD 后端（创始人与钉钉协同：云效流水线事件可推钉钉群）。接其它系统改 label / cli / push_cmd / credential_env 即可，无需新增后端类型。"
+    },
+    "dingtalk": {
+      "type": "exec",
+      "label": "钉钉 CLI / 自定义外部 CLI",
+      "cli": "",
+      "push_cmd": "",
+      "url_prefix": "",
+      "credential_env": [
+        "DINGTALK_WEBHOOK_URL"
+      ],
+      "note": "第二种选择：外部 CLI 后端。接钉钉时填钉钉 CLI 与凭证变量名；接其它自定义系统时改 label / cli / push_cmd / credential_env 即可，无需新增后端。命令参数以该系统官方文档为准，本文件不预设。"
+    }
+  },
+  "active_profile": "app",
+  "profiles": {
+    "app": {
+      "label": "APP / 互联网产品",
+      "step_docs": [
+        "0_约束卡.md",
+        "1_MRD.md",
+        "2_立项决策.md",
+        "3_BRD.md",
+        "4_产品定义.md",
+        "5_设计交付.md",
+        "6_实现与测试.md",
+        "7_上线.md",
+        "8_复盘.md"
+      ],
+      "step_owner": {
+        "0_约束卡.md": {
+          "role": "strategist",
+          "stage": "0"
+        },
+        "1_MRD.md": {
+          "role": "market",
+          "stage": "1"
+        },
+        "2_立项决策.md": {
+          "role": "strategist",
+          "stage": "2"
+        },
+        "3_BRD.md": {
+          "role": "strategist",
+          "stage": "3"
+        },
+        "6_实现与测试.md": {
+          "role": "engineer",
+          "stage": "6"
+        },
+        "7_上线.md": {
+          "role": "growth",
+          "stage": "7"
+        },
+        "8_复盘.md": {
+          "role": "pm",
+          "stage": "8"
+        },
+        "4_产品定义.md": {
+          "role": "pm",
+          "stage": "4"
+        },
+        "5_设计交付.md": {
+          "role": "design",
+          "stage": "5"
+        }
+      },
+      "role_bindings": {
+        "strategist": {
+          "backend": "local",
+          "artifacts": {
+            "0_约束卡": "30_项目/{project}/{version}/{role}/0_约束卡.md",
+            "2_立项决策": "30_项目/{project}/{version}/{role}/2_立项决策.md",
+            "8_经营复盘": "30_项目/{project}/{version}/{role}/8_复盘.md",
+            "3_BRD": "30_项目/{project}/{version}/{role}/3_BRD.md"
+          }
+        },
+        "market": {
+          "backend": "local",
+          "artifacts": {
+            "1_MRD": "30_项目/{project}/{version}/{role}/1_MRD.md"
+          }
+        },
+        "pm": {
+          "backend": "local",
+          "artifacts": {
+            "8_复盘": "30_项目/{project}/{version}/{role}/8_复盘.md",
+            "4_产品定义": "30_项目/{project}/{version}/{role}/4_产品定义.md",
+            "4_产品基线": "30_项目/{project}/{version}/{role}/4_产品基线.md",
+            "4_里程碑": "30_项目/{project}/{version}/{role}/4_里程碑.md",
+            "4_功能清单": "30_项目/{project}/{version}/{role}/4_功能清单.md",
+            "4_交互与原型": "30_项目/{project}/{version}/{role}/4_交互与原型.md",
+            "4_非功能需求": "30_项目/{project}/{version}/{role}/4_非功能需求.md"
+          }
+        },
+        "design": {
+          "backend": "local",
+          "artifacts": {
+            "5_设计token": "30_项目/{project}/{version}/{role}/5_设计token.md",
+            "5_原型": "30_项目/{project}/{version}/{role}/5_原型.html",
+            "5_设计交接清单": "30_项目/{project}/{version}/{role}/5_设计交接清单.md",
+            "5_设计交付": "30_项目/{project}/{version}/{role}/5_设计交付.md"
+          }
+        },
+        "engineer": {
+          "backend": "local",
+          "artifacts": {
+            "6_实现与测试": "30_项目/{project}/{version}/{role}/6_实现与测试.md",
+            "7_上线与回滚": "30_项目/{project}/{version}/{role}/7_上线.md"
+          }
+        },
+        "growth": {
+          "backend": "local",
+          "artifacts": {
+            "7_获客与客服": "30_项目/{project}/{version}/{role}/7_上线.md"
+          }
+        },
+        "governance": {
+          "backend": "local",
+          "artifacts": {
+            "评测": "99_Agent配置/评测/"
+          }
+        },
+        "architect": {
+          "backend": "local",
+          "artifacts": {
+            "5_架构设计": "30_项目/{project}/{version}/{role}/5_架构设计.md",
+            "5_API契约": "30_项目/{project}/{version}/{role}/5_API契约.yaml",
+            "5_时序与数据模型": "30_项目/{project}/{version}/{role}/5_时序与数据模型.md",
+            "5_任务档案": "30_项目/{project}/{version}/{role}/5_任务档案.md"
+          }
+        }
+      },
+      "knowledge_domains": [
+        "行业洞察",
+        "商业模式",
+        "产品方法",
+        "设计规范",
+        "技术架构",
+        "增长与运营",
+        "合规与财务"
+      ],
+      "tags_vocab": [
+        "订阅制",
+        "高频工具",
+        "B端结算",
+        "冷启动",
+        "MVP",
+        "新赛道",
+        "移动端",
+        "并发"
+      ]
+    },
+    "content": {
+      "label": "内容创作 / 自媒体",
+      "step_docs": [
+        "0_约束卡.md",
+        "1_选题洞察.md",
+        "2_立项决策.md",
+        "3_内容定位.md",
+        "4_内容策划案.md",
+        "5_文案与视觉.md",
+        "6_审校与合规.md",
+        "7_发布与分发.md",
+        "8_复盘.md"
+      ],
+      "step_owner": {
+        "0_约束卡.md": {
+          "role": "strategist",
+          "stage": "0"
+        },
+        "1_选题洞察.md": {
+          "role": "market",
+          "stage": "1"
+        },
+        "2_立项决策.md": {
+          "role": "strategist",
+          "stage": "2"
+        },
+        "3_内容定位.md": {
+          "role": "strategist",
+          "stage": "3"
+        },
+        "4_内容策划案.md": {
+          "role": "pm",
+          "stage": "4"
+        },
+        "5_文案与视觉.md": {
+          "role": "design",
+          "stage": "5"
+        },
+        "6_审校与合规.md": {
+          "role": "editor",
+          "stage": "6"
+        },
+        "7_发布与分发.md": {
+          "role": "growth",
+          "stage": "7"
+        },
+        "8_复盘.md": {
+          "role": "pm",
+          "stage": "8"
+        }
+      },
+      "role_bindings": {
+        "strategist": {
+          "backend": "local",
+          "artifacts": {
+            "0_约束卡": "30_项目/{project}/{version}/{role}/0_约束卡.md",
+            "2_立项决策": "30_项目/{project}/{version}/{role}/2_立项决策.md",
+            "8_经营复盘": "30_项目/{project}/{version}/{role}/8_复盘.md",
+            "3_内容定位": "30_项目/{project}/{version}/{role}/3_内容定位.md"
+          }
+        },
+        "market": {
+          "backend": "local",
+          "artifacts": {
+            "1_选题洞察": "30_项目/{project}/{version}/{role}/1_选题洞察.md"
+          }
+        },
+        "pm": {
+          "backend": "local",
+          "artifacts": {
+            "4_内容策划案": "30_项目/{project}/{version}/{role}/4_内容策划案.md",
+            "8_复盘": "30_项目/{project}/{version}/{role}/8_复盘.md",
+            "4_产品定义": "30_项目/{project}/{version}/{role}/4_产品定义.md",
+            "4_产品基线": "30_项目/{project}/{version}/{role}/4_产品基线.md",
+            "4_里程碑": "30_项目/{project}/{version}/{role}/4_里程碑.md",
+            "4_功能清单": "30_项目/{project}/{version}/{role}/4_功能清单.md",
+            "4_交互与原型": "30_项目/{project}/{version}/{role}/4_交互与原型.md",
+            "4_非功能需求": "30_项目/{project}/{version}/{role}/4_非功能需求.md"
+          }
+        },
+        "design": {
+          "backend": "local",
+          "artifacts": {
+            "5_文案与视觉": "30_项目/{project}/{version}/{role}/5_文案与视觉.md",
+            "5_设计交付": "30_项目/{project}/{version}/{role}/5_设计交付.md"
+          }
+        },
+        "editor": {
+          "backend": "local",
+          "artifacts": {
+            "5_文案终审": "30_项目/{project}/{version}/{role}/5_文案与视觉.md",
+            "6_审校与合规": "30_项目/{project}/{version}/{role}/6_审校与合规.md"
+          }
+        },
+        "growth": {
+          "backend": "local",
+          "artifacts": {
+            "7_发布与分发": "30_项目/{project}/{version}/{role}/7_发布与分发.md"
+          }
+        },
+        "governance": {
+          "backend": "local",
+          "artifacts": {
+            "评测": "99_Agent配置/评测/"
+          }
+        },
+        "architect": {
+          "backend": "local",
+          "artifacts": {
+            "5_架构设计": "30_项目/{project}/{version}/{role}/5_架构设计.md"
+          }
+        }
+      },
+      "knowledge_domains": [
+        "行业洞察",
+        "商业模式",
+        "内容方法",
+        "增长与运营",
+        "合规与财务"
+      ],
+      "tags_vocab": [
+        "短视频",
+        "图文专栏",
+        "知识付费",
+        "直播",
+        "私域运营",
+        "品牌向",
+        "系列化",
+        "跨界联动"
+      ]
+    }
+  },
+  "profiles_note": "换行业只换 profile：骨架（四层架构、owner/scope、简历回流、逻辑键→URI、脚本命令）行业无关，全部复用；每个 profile 只定义 step_docs（流程文档名）、step_owner（每步归属职业）、role_bindings（职业集合与产出键）、knowledge_domains（20_知识资产 子目录）、tags_vocab。新增行业 = 在 profiles 里加一段，不改脚本。app 自带手写岗位卡；其他 profile 缺卡时 init 自动生成九节骨架卡，由创始人 + Agent 在首个项目补全。",
+  "internal_layers": {
+    "L1": "local",
+    "L3": "local",
+    "L4": "local",
+    "note": "骨架层 / 职业简历层 / 规则层建议始终本地，以保证双链、版本控制与一键回滚；仅 L2 产出层适合外部化"
+  },
+  "active_project": "",
+  "active_project_note": "当前项目编号，由 opc new 自动写入；opc done / go / handoff 省略 --project 时一律取此值，创始人无需重复声明项目。",
+  "notify": {
+    "enabled": true,
+    "channel": "local",
+    "channels": {
+      "local": {
+        "type": "local",
+        "file": "99_Agent配置/_交接通知.md",
+        "note": "把交接通知追加进 Vault 内的人可读文件，零配置即可用"
+      },
+      "feishu": {
+        "type": "exec",
+        "cli": "python",
+        "push_cmd": "python \"{vault}/99_Agent配置/通知桥/notify_feishu.py\" \"{file}\"",
+        "credential_env": [
+          "FEISHU_WEBHOOK_URL"
+        ],
+        "note": "开箱即用：init 会把通知桥脚本复制到 Vault 的 99_Agent配置/通知桥/。只需设置环境变量 FEISHU_WEBHOOK_URL 并把 notify.channel 改成 feishu；机器人开启签名校验时再设 FEISHU_WEBHOOK_SECRET（可选，不列入 credential_env 以免误判为必填）。企微/微信等 webhook 网关换脚本与 push_cmd 即可。凭证值绝不写入本文件；未配置或发送失败自动降级为 local，通知不丢。"
+      },
+      "dingtalk": {
+        "type": "exec",
+        "cli": "python",
+        "push_cmd": "python \"{vault}/99_Agent配置/通知桥/notify_webhook.py\" \"{file}\" --kind dingtalk",
+        "credential_env": [
+          "DINGTALK_WEBHOOK_URL"
+        ],
+        "note": "钉钉群机器人 webhook。设置环境变量 DINGTALK_WEBHOOK_URL 后把 notify.channel 改为 dingtalk。"
+      },
+      "yunxiao": {
+        "type": "exec",
+        "cli": "python",
+        "push_cmd": "python \"{vault}/99_Agent配置/通知桥/notify_webhook.py\" \"{file}\" --kind yunxiao",
+        "credential_env": [
+          "YUNXIAO_WEBHOOK_URL"
+        ],
+        "note": "云效（Codeup/Flow）webhook 网关。设置 YUNXIAO_WEBHOOK_URL 后把 notify.channel 改为 yunxiao；云效自带的流水线/代码事件通知仍在云效侧配置。"
+      }
+    },
+    "state_path": "99_Agent配置/_交接状态.json",
+    "gates": [
+      0,
+      2,
+      7
+    ],
+    "gates_note": "闸门阶段必须创始人给出结论（通过/驳回/需补充），不能只回『继续』",
+    "scope_note": "通知只发给创始人，不发给下游 Agent；下游由 step_docs 顺序推导，禁止跨步与指定。产出可为任意文件格式，用 opc done --file 一并登记。",
+    "confirm_listener": {
+      "enabled": false,
+      "type": "feishu_ws",
+      "start_cmd": "python scripts/opc.py listen --vault \"{vault}\"",
+      "credential_env": [
+        "FEISHU_APP_ID",
+        "FEISHU_APP_SECRET"
+      ],
+      "optional_env": [
+        "FEISHU_ALLOWED_OPEN_ID"
+      ],
+      "note": "可选常驻组件，只用于【收】创始人的自然语言确认，不用于【发】交接通知（发仍走 notify.channel）。基于飞书 SDK 的 WebSocket 长连接，仅企业自建应用，需订阅 im.message.receive_v1 并在后台选择「使用长连接接收事件」；凭证值只走环境变量。未启用或依赖缺失时降级为在当前会话里说一句『继续』，由当前会话代为执行 opc go。"
+    },
+    "dispatch": {
+      "enabled": true,
+      "founder_id_env": "FEISHU_FOUNDER_UNION_ID",
+      "profile_root": "~/.hermes/profiles",
+      "app_id_env": "FEISHU_APP_ID",
+      "app_secret_env": "FEISHU_APP_SECRET",
+      "note": "v2.27：mode=group → 角色在群里 @ 创始人（唤醒零 @）；mode=dm → 私聊。chat_id 填群 ID（公开标识，不是凭证）。创始人交互时 @ 该角色 —— require_mention=true 保证只有被 @ 的角色醒。凭证与 union_id 只走环境变量，不入库。",
+      "mode": "group",
+      "chat_id": ""
+    }
+  },
+  "agent_mode": "single",
+  "agent_mode_note": "single=单个 Bot 按岗位卡切换身份（默认，任何支持自定义提示词的 Agent 产品都能跑）；multi=每个职业一个独立 Bot（需宿主支持多 Bot 且需手动创建）",
+  "index_path": "30_项目/_产出索引.md",
+  "security": {
+    "credentials_in_config": false,
+    "credentials_source": "environment_variables_only",
+    "note": "永远不要把 app_secret / token 写入本文件、简历或任何入库文档"
+  },
+  "tools": {
+    "registry_path": "99_Agent配置/工具注册表.md",
+    "project_config_name": "_工具配置.md",
+    "registry_version": "v1.9",
+    "require_approval_for_registry": true,
+    "credential_policy": "env_only",
+    "note": "全局注册表仅创始人经 opc tools promote --approve 可写；Agent 只读。项目层每项目一份、只增不改、随项目归档。凭证只存环境变量名，API Key 值与 MCP server 配置留在宿主。 首批 22 项出厂预置于 2026-11-12 联网核实并经创始人确认。"
+  }
+}
